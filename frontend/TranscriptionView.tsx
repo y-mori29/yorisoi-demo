@@ -11,7 +11,8 @@ export default function TranscriptionView({ transcriptionId }: { transcriptionId
   const [segments, setSegments] = useState<Segment[]>([]);
 
   useEffect(() => {
-    const ws = new WebSocket(`ws://localhost:4000/ws/transcriptions/${transcriptionId}`);
+    const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000";
+    const ws = new WebSocket(`${wsBaseUrl}/ws/transcriptions/${transcriptionId}`);
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setSegments((prev) => [...prev, ...(data.segments || [])]);
