@@ -1,15 +1,34 @@
 import { Router } from 'express';
 import crypto from 'crypto';
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
 import { createShare, findShare, removeShare } from '../utils/sharesStore';
 
 const router = Router();
-const LOG_PATH = path.join(__dirname, '..', 'logs', 'access.log');
 
-function logAccess(token: string, success: boolean, message: string) {
+const LOG_DIR = path.join(__dirname, '..', 'logs');
+const LOG_PATH = path.join(LOG_DIR, 'access.log');
+const LOG_MAX_SIZE = parseInt(process.env.ACCESS_LOG_MAX_BYTES || '1048576', 10); // 1MB default
+
+async function logAccess(token: string, success: boolean, message: string) {
   const line = `${new Date().toISOString()} token=${token} success=${success} message=${message}\n`;
-  fs.appendFile(LOG_PATH, line, err => { if (err) console.error(err); });
+  try {
+    await fs.mkdir(LOG_DIR, { recursive: true });
+    let size = 0;
+    try {
+      const stats = await fs.stat(LOG_PATH);
+      size = stats.size;
+    } catch (err: any) {
+      if (err.code !== 'ENOENT') throw err;
+    }
+    if (size >= LOG_MAX_SIZE) {
+      const rotated = path.join(LOG_DIR, `access-${Date.now()}.log`);
+      await fs.rename(LOG_PATH, rotated);
+    }
+    await fs.appendFile(LOG_PATH, line);
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 router.post('/share', (req, res) => {
