@@ -8,18 +8,25 @@ interface ConsentModalProps {
 const ConsentModal: React.FC<ConsentModalProps> = ({ userId, onStart }) => {
   const [checked, setChecked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const submitConsent = async () => {
     setSubmitting(true);
+    setError(null);
     try {
-      await fetch('/api/consent', {
+      const response = await fetch('/api/consent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, consent: true }),
       });
+      if (!response.ok) {
+        setError('同意の保存に失敗しました。');
+        return;
+      }
       onStart();
     } catch (err) {
       console.error(err);
+      setError('ネットワークエラーが発生しました。');
     } finally {
       setSubmitting(false);
     }
@@ -40,6 +47,7 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ userId, onStart }) => {
         <button onClick={submitConsent} disabled={!checked || submitting}>
           録音開始
         </button>
+        {error && <p className="error">{error}</p>}
       </div>
     </div>
   );
