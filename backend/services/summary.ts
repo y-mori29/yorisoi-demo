@@ -25,13 +25,22 @@ Return JSON with keys: clinicianSummary (array of three strings), todoList (arra
   });
 
   const content = response.choices[0]?.message?.content || '{}';
-  const data = JSON.parse(content);
+  try {
+    const data = JSON.parse(content);
 
-  return {
-    clinicianSummary: data.clinicianSummary || [],
-    todoList: data.todoList || [],
-    patientText: data.patientText || ''
-  };
+    return {
+      clinicianSummary: data.clinicianSummary || [],
+      todoList: data.todoList || [],
+      patientText: data.patientText || ''
+    };
+  } catch (error) {
+    console.error('Failed to parse summary response', error);
+    return {
+      clinicianSummary: [],
+      todoList: [],
+      patientText: ''
+    };
+  }
 }
 
 export async function saveSummary(patientId: string, result: SummaryResult): Promise<void> {
