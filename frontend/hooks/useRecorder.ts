@@ -16,6 +16,7 @@ interface RecorderControls {
  */
 export function useRecorder(): RecorderControls {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const chunksRef = useRef<Blob[]>([]);
@@ -31,6 +32,7 @@ export function useRecorder(): RecorderControls {
       setIsRecording(false);
       return;
     }
+    streamRef.current = stream;
     const mediaRecorder = new MediaRecorder(stream);
     chunksRef.current = [];
     mediaRecorder.ondataavailable = (e) => {
@@ -78,6 +80,8 @@ export function useRecorder(): RecorderControls {
         } catch (e) {
           console.error('Failed to upload audio', e);
         }
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
         resolve();
       };
       mr.stop();
