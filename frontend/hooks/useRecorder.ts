@@ -22,7 +22,15 @@ export function useRecorder(): RecorderControls {
 
   const start = async () => {
     if (isRecording) return;
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+      console.error('Failed to obtain microphone access', e);
+      alert('マイクの権限を取得できませんでした。');
+      setIsRecording(false);
+      return;
+    }
     const mediaRecorder = new MediaRecorder(stream);
     chunksRef.current = [];
     mediaRecorder.ondataavailable = (e) => {
