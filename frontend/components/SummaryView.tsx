@@ -39,11 +39,13 @@ const SummaryView: React.FC<SummaryViewProps> = ({
   const addSummary = () => {
     const next = [...summary, ''];
     setSummary(next);
+    onChange?.(next, todo, patientText);
   };
 
   const addTodo = () => {
     const next = [...todo, ''];
     setTodo(next);
+    onChange?.(summary, next, patientText);
   };
 
   return (

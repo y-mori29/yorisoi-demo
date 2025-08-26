@@ -6,6 +6,7 @@ import { createShare, findShare, removeShare } from '../utils/sharesStore';
 
 const router = Router();
 const MAX_CONTENT_BYTES = 1024 * 1024; // 1 MB limit
+const MAX_EXPIRATION_SECONDS = 60 * 60 * 24; // 24 hours
 
 const LOG_DIR = path.join(__dirname, '..', 'logs');
 const LOG_PATH = path.join(LOG_DIR, 'access.log');
@@ -34,8 +35,12 @@ async function logAccess(token: string, success: boolean, message: string) {
 
 router.post('/share', async (req, res) => {
   const { content, expiresInSeconds, password } = req.body;
-  if (!content || !expiresInSeconds) {
+  const expires = parseInt(expiresInSeconds, 10);
+  if (!content || Number.isNaN(expires)) {
     return res.status(400).json({ error: 'content and expiresInSeconds required' });
+  }
+  if (expires <= 0 || expires > MAX_EXPIRATION_SECONDS) {
+    return res.status(400).json({ error: `expiresInSeconds must be between 1 and ${MAX_EXPIRATION_SECONDS}` });
   }
 
   const contentSize = Buffer.byteLength(content, 'utf8');
@@ -44,7 +49,7 @@ router.post('/share', async (req, res) => {
   }
 
   try {
-    const record = await createShare(content, expiresInSeconds, password);
+    const record = await createShare(content, expires, password);
     res.json({ token: record.token, expiresAt: record.expiresAt });
   } catch (err) {
     console.error(err);

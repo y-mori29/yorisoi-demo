@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
+export const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
 
 export function cleanupUploads() {
   fs.readdir(UPLOADS_DIR, (err, files) => {

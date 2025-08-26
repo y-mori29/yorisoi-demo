@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import multer from 'multer';
 import fs from 'fs';
+import { UPLOADS_DIR } from '../utils/cleanupUploads';
 
 const router = Router();
-const upload = multer({ dest: 'uploads/' });
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+const upload = multer({ dest: UPLOADS_DIR });
 
 /**
  * POST /api/uploadAudio
