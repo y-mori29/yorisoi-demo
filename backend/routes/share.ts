@@ -6,6 +6,7 @@ import { createShare, findShare, removeShare } from '../utils/sharesStore';
 
 const router = Router();
 const LOG_PATH = path.join(__dirname, '..', 'logs', 'access.log');
+const MAX_CONTENT_BYTES = 1024 * 1024; // 1 MB limit
 
 function logAccess(token: string, success: boolean, message: string) {
   const line = `${new Date().toISOString()} token=${token} success=${success} message=${message}\n`;
@@ -16,6 +17,10 @@ router.post('/share', (req, res) => {
   const { content, expiresInSeconds, password } = req.body;
   if (!content || !expiresInSeconds) {
     return res.status(400).json({ error: 'content and expiresInSeconds required' });
+  }
+  const contentSize = Buffer.byteLength(content, 'utf8');
+  if (contentSize > MAX_CONTENT_BYTES) {
+    return res.status(400).json({ error: 'content too large' });
   }
   const record = createShare(content, expiresInSeconds, password);
   res.json({ token: record.token, expiresAt: record.expiresAt });
