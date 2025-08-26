@@ -9,8 +9,7 @@ const dbPromise = open({
   driver: sqlite3.Database,
 });
 
-router.post('/', async (req, res) => {
-  const { userId, consent } = req.body;
+export async function initConsentTable() {
   const db = await dbPromise;
   await db.exec(`CREATE TABLE IF NOT EXISTS consents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,6 +19,11 @@ router.post('/', async (req, res) => {
     ip TEXT,
     user_agent TEXT
   )`);
+}
+
+router.post('/', async (req, res) => {
+  const { userId, consent } = req.body;
+  const db = await dbPromise;
 
   const time = new Date().toISOString();
   const ip = req.ip;
