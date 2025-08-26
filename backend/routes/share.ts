@@ -12,25 +12,29 @@ function logAccess(token: string, success: boolean, message: string) {
   fs.appendFile(LOG_PATH, line, err => { if (err) console.error(err); });
 }
 
-router.post('/share', (req, res) => {
+router.post('/share', async (req, res) => {
   const { content, expiresInSeconds, password } = req.body;
   if (!content || !expiresInSeconds) {
     return res.status(400).json({ error: 'content and expiresInSeconds required' });
   }
-  const record = createShare(content, expiresInSeconds, password);
-  res.json({ token: record.token, expiresAt: record.expiresAt });
+  try {
+    const record = await createShare(content, expiresInSeconds, password);
+    res.json({ token: record.token, expiresAt: record.expiresAt });
+  } catch (err) {
+    res.status(500).json({ error: 'internal error' });
+  }
 });
 
-router.get('/share/:token', (req, res) => {
+router.get('/share/:token', async (req, res) => {
   const token = req.params.token;
   const password = req.query.password as string | undefined;
-  const share = findShare(token);
+  const share = await findShare(token);
   if (!share) {
     logAccess(token, false, 'not_found');
     return res.status(404).json({ error: 'not found' });
   }
   if (share.expiresAt <= Date.now()) {
-    removeShare(token);
+    await removeShare(token);
     logAccess(token, false, 'expired');
     return res.status(410).json({ error: 'expired' });
   }
