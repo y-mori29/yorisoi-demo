@@ -8,11 +8,16 @@ export default function SharePage() {
   const [error, setError] = useState<string>('');
   const [passwordRequired, setPasswordRequired] = useState(false);
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const load = (pwd?: string) => {
+  const load = async (pwd?: string) => {
     if (!token) return;
-    const url = pwd ? `/api/share/${token}?password=${encodeURIComponent(pwd)}` : `/api/share/${token}`;
-    fetch(url).then(async res => {
+    const url = pwd
+      ? `/api/share/${token}?password=${encodeURIComponent(pwd)}`
+      : `/api/share/${token}`;
+    try {
+      setLoading(true);
+      const res = await fetch(url);
       if (res.status === 200) {
         const data = await res.json();
         setContent(data.content);
@@ -30,12 +35,21 @@ export default function SharePage() {
       } else {
         setError('Unknown error');
       }
-    });
+    } catch (e) {
+      setError('Failed to fetch data');
+      setPasswordRequired(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     load();
   }, [token]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (error && !passwordRequired && !content) {
     return <div>{error}</div>;
@@ -47,7 +61,11 @@ export default function SharePage() {
       {!content && passwordRequired && (
         <div>
           <p>{error}</p>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+          />
           <button onClick={() => load(password)}>Submit</button>
         </div>
       )}
