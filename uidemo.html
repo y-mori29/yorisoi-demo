@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医療相談記録・要約アプリ MVP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Klee+One&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f8fafc;
+        }
+        .font-klee-one { font-family: 'Klee One', cursive; }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #e2e8f0;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+            background-color: #f8fafc;
+            padding: 0 1rem;
+        }
+        .step-circle {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid #e2e8f0;
+            background-color: #fff;
+            color: #94a3b8;
+        }
+        .step-label {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+        .step.active .step-circle {
+            background-color: #f97316;
+            color: #fff;
+            border-color: #f97316;
+        }
+        .step.active .step-label {
+            color: #f97316;
+            font-weight: 600;
+        }
+        .step.completed .step-circle {
+            background-color: #fb923c;
+            color: #fff;
+            border-color: #fb923c;
+        }
+        .step.completed .step-label {
+            color: #fb923c;
+        }
+        .recording-indicator {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 90%;
+            max-width: 500px;
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease-in-out;
+        }
+        .modal-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-backdrop.active .modal-content {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased text-slate-800">
+    <header class="w-full z-40 flex items-center justify-between px-4 py-2 bg-white shadow-md">
+        <h1 class="flex justify-start text-xl font-bold">
+            <a class="flex items-center text-gray-800" href="#">
+                <img alt="よりそい ロゴ" class="rounded-full shadow-sm" height="40" src="https://placehold.co/40x40/FFDDC1/FF6B35?text=Y" width="40" />
+                <p class="ml-2 whitespace-nowrap text-orange-500 font-klee-one text-2xl">よりそい</p>
+            </a>
+        </h1>
+    </header>
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8 mt-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">医療相談きろく</h1>
+            <p class="text-slate-600 mt-2">医師との大切な対話を、いつでも振り返れる形に。</p>
+        </header>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="step-1">
+                <div class="step-circle">1</div>
+                <div class="step-label">プロフィール</div>
+            </div>
+            <div class="step" id="step-2">
+                <div class="step-circle">2</div>
+                <div class="step-label">録音</div>
+            </div>
+            <div class="step" id="step-3">
+                <div class="step-circle">3</div>
+                <div class="step-label">確認・共有</div>
+            </div>
+        </div>
+
+        <main>
+            <!-- Screen: Profile -->
+            <section id="profile-section" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <h2 class="text-2xl font-bold mb-6 text-slate-800">はじめに教えてください</h2>
+                <form id="profile-form" class="space-y-6">
+                    <div>
+                        <label for="age-group" class="block text-sm font-medium text-slate-700 mb-1">年代</label>
+                        <select id="age-group" name="age-group" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
+                            <option>選択してください</option>
+                            <option>10代以下</option>
+                            <option>20代</option>
+                            <option>30代</option>
+                            <option>40代</option>
+                            <option>50代</option>
+                            <option>60代</option>
+                            <option>70代</option>
+                            <option>80代以上</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="gender" class="block text-sm font-medium text-slate-700 mb-1">性別</label>
+                        <select id="gender" name="gender" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
+                            <option>選択してください</option>
+                            <option>男性</option>
+                            <option>女性</option>
+                            <option>その他</option>
+                            <option>回答しない</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="conditions" class="block text-sm font-medium text-slate-700 mb-1">疾患・病気・体調不調について</label>
+                        <textarea id="conditions" name="conditions" rows="4" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="例：2週間前からの頭痛、高血圧"></textarea>
+                    </div>
+                    <div>
+                        <label for="treatments" class="block text-sm font-medium text-slate-700 mb-1">治療内容</label>
+                        <textarea id="treatments" name="treatments" rows="4" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="例：血圧降下剤による治療"></textarea>
+                    </div>
+                    <div>
+                        <label for="medication-history" class="block text-sm font-medium text-slate-700 mb-1">服薬歴</label>
+                        <textarea id="medication-history" name="medication-history" rows="4" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="例：アムロジピン5mg 1日1回"></textarea>
+                    </div>
+                    <div class="text-right">
+                        <button type="submit" class="bg-orange-500 text-white font-bold py-3 px-8 rounded-full hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-transform transform hover:scale-105 shadow-md">
+                            保存して録音に進む
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Screen: Recording -->
+            <section id="recording-section" class="hidden bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <h2 class="text-2xl font-bold mb-2 text-slate-800">診察の録音</h2>
+                <p class="text-slate-600 mb-6">医師の許可を得てから録音を開始してください。</p>
+                
+                <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-800 p-4 rounded-r-lg mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle h-6 w-6 mr-3 mt-1 text-amber-600"></i>
+                        <div>
+                            <h3 class="font-bold">医療者への録音告知</h3>
+                            <p class="text-sm">「あとで聞き返せるように、診察内容を録音してもよろしいでしょうか？」とお伝えください。</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 pl-8">
+                        <label for="consent-check" class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="consent-check" class="h-5 w-5 rounded border-slate-300 text-orange-600 focus:ring-orange-500">
+                            <span class="ml-3 text-sm text-slate-700">医師から録音の同意を得ました。</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="recording-indicator" class="hidden flex items-center justify-center space-x-3 bg-red-100 text-red-700 p-3 rounded-lg mb-6 recording-indicator">
+                    <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                    <span class="font-bold text-lg">録音中...</span>
+                    <span id="timer" class="font-mono text-lg">00:00</span>
+                </div>
+
+                <div class="flex items-center justify-center space-x-4">
+                    <button id="record-btn" class="flex items-center justify-center w-36 h-16 bg-slate-200 text-slate-500 font-bold py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <i class="fas fa-microphone h-6 w-6 mr-2"></i>
+                        <span id="record-btn-text">録音開始</span>
+                    </button>
+                    <button id="stop-btn" class="flex items-center justify-center w-36 h-16 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <i class="fas fa-stop h-6 w-6 mr-2"></i>
+                        <span>終了</span>
+                    </button>
+                </div>
+                
+                <div class="mt-8 bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg">
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-triangle h-6 w-6 mr-3 mt-1 text-blue-600"></i>
+                        <div>
+                            <h3 class="font-bold">ご注意</h3>
+                            <ul class="list-disc list-inside text-sm mt-1 space-y-1">
+                                <li>このサービスは医療助言を提供するものではありません。</li>
+                                <li>緊急の場合は、速やかに医療機関を受診してください。</li>
+                                <li>録音データは個人の責任において管理してください。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen: Summary & Share -->
+            <section id="summary-section" class="hidden bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <div id="loading-state" class="text-center py-12">
+                    <div class="flex justify-center items-center mb-4">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                    </div>
+                    <p class="text-lg font-semibold text-slate-700">AIが文字起こしと要約を作成中です...</p>
+                    <p class="text-slate-500">通常1~2分で完了します。</p>
+                </div>
+
+                <div id="content-state" class="hidden">
+                    <h2 class="text-2xl font-bold mb-6 text-slate-800">文字起こし & 受診後サマリー</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="order-2 lg:order-1">
+                            <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-file-alt mr-2 text-orange-600"></i>文字起こし記録</h3>
+                            <div id="transcription-log" class="h-96 overflow-y-auto bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4"></div>
+                        </div>
+
+                        <div class="order-1 lg:order-2 space-y-6">
+                            <div>
+                                <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-key mr-2 text-amber-600"></i>今日の要点 (3つ)</h3>
+                                <div id="summary-points" class="bg-amber-50 p-4 rounded-lg border border-amber-200 space-y-2"></div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-tasks mr-2 text-blue-600"></i>やることリスト</h3>
+                                <div id="todo-list" class="bg-blue-50 p-4 rounded-lg border border-blue-200 space-y-2"></div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-share-alt mr-2 text-green-600"></i>ご家族への共有</h3>
+                                <div class="bg-green-50 p-4 rounded-lg border border-green-200 space-y-4">
+                                    <p class="text-sm text-green-800">閲覧専用のリンクを生成して、ご家族に共有できます。</p>
+                                    <button id="generate-link-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-full hover:bg-green-700 transition shadow">
+                                        共有リンクを生成する
+                                    </button>
+                                    <div id="share-link-container" class="hidden">
+                                        <label for="share-link" class="block text-sm font-medium text-slate-700">生成されたリンク</label>
+                                        <div class="flex mt-1">
+                                            <input type="text" id="share-link" class="w-full p-2 border border-slate-300 rounded-l-lg bg-slate-100" readonly>
+                                            <button id="copy-link-btn" class="bg-slate-600 text-white px-4 rounded-r-lg hover:bg-slate-700">コピー</button>
+                                        </div>
+                                        <div class="text-xs text-slate-500 mt-2">※このリンクは72時間後に自動で無効になります。</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="stop-modal" class="modal-backdrop">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4">録音の終了</h3>
+            <p class="text-slate-600 mb-6">本当に録音を終了しますか？終了すると、文字起こしと要約の生成が始まります。</p>
+            <div class="flex justify-end space-x-4">
+                <button id="cancel-stop-btn" class="bg-slate-200 text-slate-800 font-bold py-2 px-6 rounded-full hover:bg-slate-300 transition">キャンセル</button>
+                <button id="confirm-stop-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-full hover:bg-red-700 transition">終了する</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const state = {
+                currentView: 'profile-section',
+                isRecording: false,
+                isPaused: false,
+                timerInterval: null,
+                seconds: 0,
+            };
+
+            const sections = {
+                profile: document.getElementById('profile-section'),
+                recording: document.getElementById('recording-section'),
+                summary: document.getElementById('summary-section'),
+            };
+            const steps = { 1: document.getElementById('step-1'), 2: document.getElementById('step-2'), 3: document.getElementById('step-3') };
+            const profileForm = document.getElementById('profile-form');
+            const consentCheck = document.getElementById('consent-check');
+            const recordBtn = document.getElementById('record-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const recordingIndicator = document.getElementById('recording-indicator');
+            const timerDisplay = document.getElementById('timer');
+            const loadingState = document.getElementById('loading-state');
+            const contentState = document.getElementById('content-state');
+            const generateLinkBtn = document.getElementById('generate-link-btn');
+            const shareLinkContainer = document.getElementById('share-link-container');
+            const shareLinkInput = document.getElementById('share-link');
+            const copyLinkBtn = document.getElementById('copy-link-btn');
+            const stopModal = document.getElementById('stop-modal');
+            const cancelStopBtn = document.getElementById('cancel-stop-btn');
+            const confirmStopBtn = document.getElementById('confirm-stop-btn');
+
+            const updateStepIndicator = (currentStep) => {
+                Object.values(steps).forEach(step => step.classList.remove('active', 'completed'));
+                for (let i = 1; i < currentStep; i++) {
+                    steps[i].classList.add('completed');
+                }
+                if (steps[currentStep]) steps[currentStep].classList.add('active');
+            };
+            
+            const showView = (viewId) => {
+                state.currentView = viewId;
+                Object.values(sections).forEach(section => section.classList.add('hidden'));
+                if(sections[viewId.split('-')[0]]) {
+                    sections[viewId.split('-')[0]].classList.remove('hidden');
+                }
+                if (viewId === 'profile-section') updateStepIndicator(1);
+                else if (viewId === 'recording-section') updateStepIndicator(2);
+                else if (viewId === 'summary-section') updateStepIndicator(3);
+            };
+
+            const startTimer = () => {
+                state.seconds = 0;
+                updateTimerDisplay();
+                state.timerInterval = setInterval(() => {
+                    if (!state.isPaused) {
+                        state.seconds++;
+                        updateTimerDisplay();
+                    }
+                }, 1000);
+            };
+
+            const stopTimer = () => {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            };
+
+            const updateTimerDisplay = () => {
+                const minutes = Math.floor(state.seconds / 60).toString().padStart(2, '0');
+                const seconds = (state.seconds % 60).toString().padStart(2, '0');
+                timerDisplay.textContent = `${minutes}:${seconds}`;
+            };
+
+            profileForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                console.log('Profile saved.');
+                showView('recording-section');
+            });
+
+            consentCheck.addEventListener('change', () => {
+                recordBtn.disabled = !consentCheck.checked;
+            });
+
+            recordBtn.addEventListener('click', () => {
+                if (!state.isRecording) {
+                    state.isRecording = true;
+                    state.isPaused = false;
+                    recordBtn.classList.remove('bg-slate-200', 'text-slate-500');
+                    recordBtn.classList.add('bg-yellow-500', 'text-white');
+                    recordBtn.innerHTML = `<i class="fas fa-pause h-6 w-6 mr-2"></i><span>一時停止</span>`;
+                    stopBtn.disabled = false;
+                    recordingIndicator.classList.remove('hidden');
+                    startTimer();
+                } else {
+                    state.isPaused = !state.isPaused;
+                    if (state.isPaused) {
+                        recordBtn.classList.remove('bg-yellow-500');
+                        recordBtn.classList.add('bg-emerald-500');
+                        recordBtn.innerHTML = `<i class="fas fa-play h-6 w-6 mr-2"></i><span>再開</span>`;
+                        recordingIndicator.classList.remove('recording-indicator');
+                    } else {
+                        recordBtn.classList.remove('bg-emerald-500');
+                        recordBtn.classList.add('bg-yellow-500');
+                        recordBtn.innerHTML = `<i class="fas fa-pause h-6 w-6 mr-2"></i><span>一時停止</span>`;
+                        recordingIndicator.classList.add('recording-indicator');
+                    }
+                }
+            });
+
+            stopBtn.addEventListener('click', () => {
+                stopModal.classList.add('active');
+            });
+
+            cancelStopBtn.addEventListener('click', () => {
+                stopModal.classList.remove('active');
+            });
+            
+            confirmStopBtn.addEventListener('click', () => {
+                stopModal.classList.remove('active');
+                state.isRecording = false;
+                state.isPaused = false;
+                stopTimer();
+                showView('summary-section');
+                simulateApiCall();
+            });
+
+            const simulateApiCall = () => {
+                loadingState.classList.remove('hidden');
+                contentState.classList.add('hidden');
+                setTimeout(() => {
+                    populateSummaryData();
+                    loadingState.classList.add('hidden');
+                    contentState.classList.remove('hidden');
+                }, 3000);
+            };
+            
+            const populateSummaryData = () => {
+                const dummyTranscription = [
+                    { speaker: '医師', time: '00:02', text: 'こんにちは、〇〇さん。本日はどうされましたか？' },
+                    { speaker: '患者', time: '00:05', text: '最近、少しめまいがすることがあって…。' },
+                    { speaker: '医師', time: '00:10', text: 'そうですか。いつ頃からですか？何かきっかけはありましたか？' },
+                    { speaker: '患者', time: '00:15', text: '1週間くらい前からです。特に仕事で疲れている時に多い気がします。' },
+                    { speaker: '医師', time: '00:22', text: 'なるほど。血圧を測ってみましょうか。はい、125の80ですね。正常範囲内です。' },
+                    { speaker: '患者', time: '00:28', text: 'よかった…。' },
+                    { speaker: '医師', time: '00:32', text: 'ストレスや疲労からくる自律神経の乱れかもしれませんね。まずは生活習慣を見直してみましょう。お薬も出しておきますね。' }
+                ];
+                const dummySummary = {
+                    points: [
+                        'めまいの原因として、ストレスや疲労による自律神経の乱れが考えられる。',
+                        '血圧は正常範囲（125/80 mmHg）で、現時点で大きな問題は見られない。',
+                        'まずは生活習慣の改善と、処方薬による症状緩和を目指す。'
+                    ],
+                    todo: [
+                        '<strong>服薬:</strong> 処方された薬を1日3回、食後に必ず服用すること。',
+                        '<strong>検査:</strong> 念のため、来週に血液検査の予約を取ること。',
+                        '<strong>注意点:</strong> 十分な睡眠時間を確保し、バランスの取れた食事を心がけること。'
+                    ]
+                };
+
+                document.getElementById('transcription-log').innerHTML = dummyTranscription.map(item => `
+                    <div class="p-3 rounded-lg ${item.speaker === '医師' ? 'bg-orange-100' : 'bg-slate-100'}">
+                        <div class="flex justify-between items-center text-xs font-bold mb-1">
+                            <span class="${item.speaker === '医師' ? 'text-orange-800' : 'text-slate-800'}">${item.speaker}</span>
+                            <span class="font-mono text-slate-500">${item.time}</span>
+                        </div>
+                        <p class="text-sm text-slate-800">${item.text}</p>
+                    </div>`).join('');
+
+                document.getElementById('summary-points').innerHTML = dummySummary.points.map(point => `
+                    <div class="flex items-start">
+                        <i class="fas fa-check-circle h-5 w-5 text-amber-600 mr-2 flex-shrink-0 mt-0.5"></i>
+                        <p class="text-sm">${point}</p>
+                    </div>`).join('');
+
+                document.getElementById('todo-list').innerHTML = dummySummary.todo.map(item => `
+                    <div class="flex items-start">
+                        <i class="fas fa-clipboard-list h-5 w-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5"></i>
+                        <p class="text-sm">${item}</p>
+                    </div>`).join('');
+            };
+            
+            generateLinkBtn.addEventListener('click', () => {
+                shareLinkInput.value = `https://example.com/summary/${crypto.randomUUID()}`;
+                shareLinkContainer.classList.remove('hidden');
+            });
+
+            copyLinkBtn.addEventListener('click', () => {
+                shareLinkInput.select();
+                try {
+                    document.execCommand('copy');
+                    copyLinkBtn.textContent = '完了!';
+                    setTimeout(() => { copyLinkBtn.textContent = 'コピー'; }, 2000);
+                } catch (err) { console.error('Copy failed', err); }
+            });
+
+            showView('profile-section');
+        });
+    </script>
+</body>
+</html>
+
