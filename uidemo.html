@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>医療相談記録・要約アプリ MVP</title>
+    <title>よりそい（MVPのみ）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,7 +39,8 @@
             align-items: center;
             z-index: 2;
             background-color: #f8fafc;
-            padding: 0 1rem;
+            padding: 0 0.5rem; /* Reduced padding for more steps */
+            text-align: center;
         }
         .step-circle {
             width: 2.5rem;
@@ -56,7 +57,7 @@
         }
         .step-label {
             margin-top: 0.5rem;
-            font-size: 0.875rem;
+            font-size: 0.75rem; /* Smaller font for more steps */
             color: #64748b;
             transition: all 0.3s ease;
         }
@@ -140,14 +141,18 @@
         <div class="step-indicator">
             <div class="step active" id="step-1">
                 <div class="step-circle">1</div>
-                <div class="step-label">プロフィール</div>
+                <div class="step-label">はじめに</div>
             </div>
             <div class="step" id="step-2">
                 <div class="step-circle">2</div>
-                <div class="step-label">録音</div>
+                <div class="step-label">相談メモ</div>
             </div>
             <div class="step" id="step-3">
                 <div class="step-circle">3</div>
+                <div class="step-label">録音</div>
+            </div>
+            <div class="step" id="step-4">
+                <div class="step-circle">4</div>
                 <div class="step-label">確認・共有</div>
             </div>
         </div>
@@ -155,51 +160,92 @@
         <main>
             <!-- Screen: Profile -->
             <section id="profile-section" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
-                <h2 class="text-2xl font-bold mb-6 text-slate-800">はじめに教えてください</h2>
-                <form id="profile-form" class="space-y-6">
+                <div class="text-center">
+                     <h2 class="text-2xl font-bold mb-2 text-slate-800">はじめまして</h2>
+                     <p class="text-slate-600 mb-8">あなたのことを少しだけ教えてください。</p>
+                </div>
+                <form id="profile-form" class="space-y-8">
                     <div>
-                        <label for="age-group" class="block text-sm font-medium text-slate-700 mb-1">年代</label>
-                        <select id="age-group" name="age-group" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
-                            <option>選択してください</option>
-                            <option>10代以下</option>
-                            <option>20代</option>
-                            <option>30代</option>
-                            <option>40代</option>
-                            <option>50代</option>
-                            <option>60代</option>
-                            <option>70代</option>
-                            <option>80代以上</option>
-                        </select>
+                        <label for="nickname" class="block text-md font-semibold text-slate-700 mb-2">どのようにお呼びすれば良いですか？</label>
+                        <input type="text" id="nickname" name="nickname" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="例：よりそい太郎" required>
                     </div>
-                    <div>
-                        <label for="gender" class="block text-sm font-medium text-slate-700 mb-1">性別</label>
-                        <select id="gender" name="gender" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
-                            <option>選択してください</option>
-                            <option>男性</option>
-                            <option>女性</option>
-                            <option>その他</option>
-                            <option>回答しない</option>
-                        </select>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label for="age-group" class="block text-md font-semibold text-slate-700 mb-2">年代</label>
+                            <select id="age-group" name="age-group" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition bg-white">
+                                <option value="">選択してください</option>
+                                <option value="10s">10代</option>
+                                <option value="20s">20代</option>
+                                <option value="30s">30代</option>
+                                <option value="40s">40代</option>
+                                <option value="50s">50代</option>
+                                <option value="60s">60代</option>
+                                <option value="70s">70代</option>
+                                <option value="80s+">80代以上</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-md font-semibold text-slate-700 mb-2">性別</label>
+                            <div class="flex flex-wrap gap-x-6 gap-y-2">
+                                <label class="flex items-center">
+                                    <input type="radio" name="gender" value="male" class="h-4 w-4 text-orange-600 border-slate-300 focus:ring-orange-500">
+                                    <span class="ml-2 text-slate-700">男性</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="gender" value="female" class="h-4 w-4 text-orange-600 border-slate-300 focus:ring-orange-500">
+                                    <span class="ml-2 text-slate-700">女性</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="gender" value="other" class="h-4 w-4 text-orange-600 border-slate-300 focus:ring-orange-500">
+                                    <span class="ml-2 text-slate-700">その他</span>
+                                </label>
+                                 <label class="flex items-center">
+                                    <input type="radio" name="gender" value="prefer_not_to_say" class="h-4 w-4 text-orange-600 border-slate-300 focus:ring-orange-500">
+                                    <span class="ml-2 text-slate-700">回答しない</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label for="conditions" class="block text-sm font-medium text-slate-700 mb-1">疾患・病気・体調不調について</label>
-                        <textarea id="conditions" name="conditions" rows="4" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="例：2週間前からの頭痛、高血圧"></textarea>
+                     <div>
+                        <label for="conditions" class="block text-md font-semibold text-slate-700 mb-2">今、気になっている症状や病気のことを教えていただけますか？</label>
+                        <textarea id="conditions" name="conditions" rows="4" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="例：2週間前からの頭痛、高血圧など"></textarea>
+                        <p class="text-xs text-slate-500 mt-1">※この情報は、あなたに合ったサポートのためにのみ使用します。</p>
                     </div>
-                    <div>
-                        <label for="treatments" class="block text-sm font-medium text-slate-700 mb-1">治療内容</label>
-                        <textarea id="treatments" name="treatments" rows="4" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="例：血圧降下剤による治療"></textarea>
-                    </div>
-                    <div>
-                        <label for="medication-history" class="block text-sm font-medium text-slate-700 mb-1">服薬歴</label>
-                        <textarea id="medication-history" name="medication-history" rows="4" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="例：アムロジピン5mg 1日1回"></textarea>
-                    </div>
-                    <div class="text-right">
+                    <div class="text-right pt-4">
                         <button type="submit" class="bg-orange-500 text-white font-bold py-3 px-8 rounded-full hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-transform transform hover:scale-105 shadow-md">
-                            保存して録音に進む
+                            次に進む <i class="fas fa-arrow-right ml-2"></i>
                         </button>
                     </div>
                 </form>
             </section>
+            
+            <!-- Screen: Consultation Memo -->
+            <section id="memo-section" class="hidden bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <h2 class="text-2xl font-bold mb-2 text-slate-800">相談メモ</h2>
+                <p class="text-slate-600 mb-6">今日、医師に確認したいことをメモして、聞き忘れを防ぎましょう。</p>
+                
+                <div>
+                    <label for="consultation-memo" class="block text-md font-semibold text-slate-700 mb-2">相談したいこと</label>
+                    <textarea id="consultation-memo" rows="6" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition" placeholder="ここに質問や相談したいことを入力します。"></textarea>
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="text-md font-semibold text-slate-700 mb-3">こんな質問はいかがですか？ (タップで追加)</h3>
+                    <div id="question-templates" class="flex flex-wrap gap-2">
+                        <button class="template-btn bg-sky-100 text-sky-800 text-sm font-semibold px-3 py-2 rounded-full hover:bg-sky-200 transition">この薬の副作用は？</button>
+                        <button class="template-btn bg-sky-100 text-sky-800 text-sm font-semibold px-3 py-2 rounded-full hover:bg-sky-200 transition">食事や運動で気をつけることは？</button>
+                        <button class="template-btn bg-sky-100 text-sky-800 text-sm font-semibold px-3 py-2 rounded-full hover:bg-sky-200 transition">次に症状が出たらどうすれば？</button>
+                        <button class="template-btn bg-sky-100 text-sky-800 text-sm font-semibold px-3 py-2 rounded-full hover:bg-sky-200 transition">他の治療法の選択肢は？</button>
+                    </div>
+                </div>
+
+                <div class="text-right pt-8">
+                    <button id="to-recording-btn" class="bg-orange-500 text-white font-bold py-3 px-8 rounded-full hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-transform transform hover:scale-105 shadow-md">
+                        録音の準備ができました
+                    </button>
+                </div>
+            </section>
+
 
             <!-- Screen: Recording -->
             <section id="recording-section" class="hidden bg-white rounded-xl shadow-lg p-6 md:p-8">
@@ -282,7 +328,12 @@
                                 <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-tasks mr-2 text-blue-600"></i>やることリスト</h3>
                                 <div id="todo-list" class="bg-blue-50 p-4 rounded-lg border border-blue-200 space-y-2"></div>
                             </div>
-                            
+                             <div>
+                                <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-comment-dots mr-2 text-purple-600"></i>不安なこと、ありませんか？</h3>
+                                <div id="support-list" class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                    <p class="text-sm text-purple-800 mb-2">次の診察で医師に確認してみましょう。</p>
+                                </div>
+                            </div>
                             <div>
                                 <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-share-alt mr-2 text-green-600"></i>ご家族への共有</h3>
                                 <div class="bg-green-50 p-4 rounded-lg border border-green-200 space-y-4">
@@ -322,6 +373,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const state = {
                 currentView: 'profile-section',
+                nickname: '',
                 isRecording: false,
                 isPaused: false,
                 timerInterval: null,
@@ -330,11 +382,14 @@
 
             const sections = {
                 profile: document.getElementById('profile-section'),
+                memo: document.getElementById('memo-section'),
                 recording: document.getElementById('recording-section'),
                 summary: document.getElementById('summary-section'),
             };
-            const steps = { 1: document.getElementById('step-1'), 2: document.getElementById('step-2'), 3: document.getElementById('step-3') };
+            const steps = { 1: document.getElementById('step-1'), 2: document.getElementById('step-2'), 3: document.getElementById('step-3'), 4: document.getElementById('step-4') };
             const profileForm = document.getElementById('profile-form');
+            const nicknameInput = document.getElementById('nickname');
+            const toRecordingBtn = document.getElementById('to-recording-btn');
             const consentCheck = document.getElementById('consent-check');
             const recordBtn = document.getElementById('record-btn');
             const stopBtn = document.getElementById('stop-btn');
@@ -349,6 +404,8 @@
             const stopModal = document.getElementById('stop-modal');
             const cancelStopBtn = document.getElementById('cancel-stop-btn');
             const confirmStopBtn = document.getElementById('confirm-stop-btn');
+            const consultationMemo = document.getElementById('consultation-memo');
+            const questionTemplates = document.getElementById('question-templates');
 
             const updateStepIndicator = (currentStep) => {
                 Object.values(steps).forEach(step => step.classList.remove('active', 'completed'));
@@ -361,13 +418,25 @@
             const showView = (viewId) => {
                 state.currentView = viewId;
                 Object.values(sections).forEach(section => section.classList.add('hidden'));
-                if(sections[viewId.split('-')[0]]) {
-                    sections[viewId.split('-')[0]].classList.remove('hidden');
+                const viewKey = viewId.split('-')[0];
+                if (sections[viewKey]) {
+                    sections[viewKey].classList.remove('hidden');
                 }
+                
                 if (viewId === 'profile-section') updateStepIndicator(1);
-                else if (viewId === 'recording-section') updateStepIndicator(2);
-                else if (viewId === 'summary-section') updateStepIndicator(3);
+                else if (viewId === 'memo-section') updateStepIndicator(2);
+                else if (viewId === 'recording-section') updateStepIndicator(3);
+                else if (viewId === 'summary-section') updateStepIndicator(4);
             };
+
+            // Question template logic
+            questionTemplates.addEventListener('click', (e) => {
+                if (e.target.classList.contains('template-btn')) {
+                    const question = e.target.textContent;
+                    consultationMemo.value += (consultationMemo.value ? '\n- ' : '- ') + question;
+                    consultationMemo.focus();
+                }
+            });
 
             const startTimer = () => {
                 state.seconds = 0;
@@ -393,7 +462,11 @@
 
             profileForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                console.log('Profile saved.');
+                state.nickname = nicknameInput.value || 'あなた';
+                showView('memo-section');
+            });
+            
+            toRecordingBtn.addEventListener('click', () => {
                 showView('recording-section');
             });
 
@@ -455,13 +528,13 @@
             };
             
             const populateSummaryData = () => {
-                const dummyTranscription = [
-                    { speaker: '医師', time: '00:02', text: 'こんにちは、〇〇さん。本日はどうされましたか？' },
-                    { speaker: '患者', time: '00:05', text: '最近、少しめまいがすることがあって…。' },
+                 const dummyTranscription = [
+                    { speaker: '医師', time: '00:02', text: `こんにちは、${state.nickname}さん。本日はどうされましたか？` },
+                    { speaker: state.nickname, time: '00:05', text: '最近、少しめまいがすることがあって…。' },
                     { speaker: '医師', time: '00:10', text: 'そうですか。いつ頃からですか？何かきっかけはありましたか？' },
-                    { speaker: '患者', time: '00:15', text: '1週間くらい前からです。特に仕事で疲れている時に多い気がします。' },
+                    { speaker: state.nickname, time: '00:15', text: '1週間くらい前からです。特に仕事で疲れている時に多い気がします。' },
                     { speaker: '医師', time: '00:22', text: 'なるほど。血圧を測ってみましょうか。はい、125の80ですね。正常範囲内です。' },
-                    { speaker: '患者', time: '00:28', text: 'よかった…。' },
+                    { speaker: state.nickname, time: '00:28', text: 'よかった…。' },
                     { speaker: '医師', time: '00:32', text: 'ストレスや疲労からくる自律神経の乱れかもしれませんね。まずは生活習慣を見直してみましょう。お薬も出しておきますね。' }
                 ];
                 const dummySummary = {
@@ -474,6 +547,11 @@
                         '<strong>服薬:</strong> 処方された薬を1日3回、食後に必ず服用すること。',
                         '<strong>検査:</strong> 念のため、来週に血液検査の予約を取ること。',
                         '<strong>注意点:</strong> 十分な睡眠時間を確保し、バランスの取れた食事を心がけること。'
+                    ],
+                    support: [
+                        'このお薬の副作用について、もう少し詳しく教えてください。',
+                        '日常生活で、食事や運動に関して気をつけることはありますか？',
+                        '次に同じような症状が出た場合、どう対処すればよいですか？'
                     ]
                 };
 
@@ -496,6 +574,12 @@
                     <div class="flex items-start">
                         <i class="fas fa-clipboard-list h-5 w-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5"></i>
                         <p class="text-sm">${item}</p>
+                    </div>`).join('');
+                
+                document.getElementById('support-list').innerHTML += dummySummary.support.map(item => `
+                    <div class="flex items-start mt-2">
+                        <i class="fas fa-question-circle h-5 w-5 text-purple-600 mr-2 flex-shrink-0 mt-0.5"></i>
+                        <p class="text-sm text-slate-800">${item}</p>
                     </div>`).join('');
             };
             
