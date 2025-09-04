@@ -1,7 +1,8 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Pool } from 'pg';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 export interface SummaryResult {
@@ -15,16 +16,9 @@ export async function generateSummary(soap: string): Promise<SummaryResult> {
 Extract exactly three bullet points for clinicians, a to-do list, and rewrite the note in plain language for the patient.
 Return JSON with keys: clinicianSummary (array of three strings), todoList (array of strings), patientText.`;
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4',
-    messages: [
-      { role: 'system', content: prompt },
-      { role: 'user', content: soap }
-    ],
-    temperature: 0.2
-  });
-
-  const content = response.choices[0]?.message?.content || '{}';
+  const input = `${prompt}\n${soap}`;
+  const response = await model.generateContent(input);
+  const content = response.response?.text() || '{}';
   try {
     const data = JSON.parse(content);
 
