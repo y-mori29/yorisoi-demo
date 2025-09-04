@@ -29,7 +29,8 @@ This project demonstrates the yorisoi demo application. It is composed of two ma
 
 | Name | Description |
 | ---- | ----------- |
-| `OPENAI_API_KEY` | API key for the OpenAI API. |
+| `GOOGLE_API_KEY` | API key for Google Gemini. |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to the Google Cloud JSON credentials for Speech-to-Text. |
 | `DATABASE_URL` | Connection string for the database. |
 | `NEXT_PUBLIC_WS_URL` | WebSocket URL used by the frontend to connect to the backend. |
 | `NEXT_PUBLIC_DISCLAIMER_TEXT` | Disclaimer text displayed in the UI. Set after legal review. |
@@ -81,7 +82,8 @@ Set `NEXT_PUBLIC_DISCLAIMER_TEXT` after legal review.
 開発を始めるには Node.js と npm が必要です。
 
 ### 環境変数
-- `OPENAI_API_KEY`: OpenAI API を利用するためのキー
+- `GOOGLE_API_KEY`: Gemini API を利用するためのキー
+- `GOOGLE_APPLICATION_CREDENTIALS`: Google Cloud Speech-to-Text 用の認証情報へのパス
 - `DATABASE_URL`: データベースへの接続文字列
 - `NEXT_PUBLIC_WS_URL`: フロントエンドがバックエンドに接続するための WebSocket URL
 - `NEXT_PUBLIC_DISCLAIMER_TEXT`: UI に表示する免責事項の文言（法務確認後に設定）
