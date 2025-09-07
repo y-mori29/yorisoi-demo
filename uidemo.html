@@ -149,7 +149,7 @@
             </div>
             <div class="step" id="step-3">
                 <div class="step-circle">3</div>
-                <div class="step-label">録音</div>
+                <div class="step-label">診察メモ</div>
             </div>
             <div class="step" id="step-4">
                 <div class="step-circle">4</div>
@@ -241,7 +241,7 @@
 
                 <div class="text-right pt-8">
                     <button id="to-recording-btn" class="bg-orange-500 text-white font-bold py-3 px-8 rounded-full hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-transform transform hover:scale-105 shadow-md">
-                        録音の準備ができました
+                        診察メモの準備ができました
                     </button>
                 </div>
             </section>
@@ -249,35 +249,19 @@
 
             <!-- Screen: Recording -->
             <section id="recording-section" class="hidden bg-white rounded-xl shadow-lg p-6 md:p-8">
-                <h2 class="text-2xl font-bold mb-2 text-slate-800">診察の録音</h2>
-                <p class="text-slate-600 mb-6">医師の許可を得てから録音を開始してください。</p>
-                
-                <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-800 p-4 rounded-r-lg mb-6">
-                    <div class="flex items-start">
-                        <i class="fas fa-info-circle h-6 w-6 mr-3 mt-1 text-amber-600"></i>
-                        <div>
-                            <h3 class="font-bold">医療者への録音告知</h3>
-                            <p class="text-sm">「あとで聞き返せるように、診察内容を録音してもよろしいでしょうか？」とお伝えください。</p>
-                        </div>
-                    </div>
-                    <div class="mt-4 pl-8">
-                        <label for="consent-check" class="flex items-center cursor-pointer">
-                            <input type="checkbox" id="consent-check" class="h-5 w-5 rounded border-slate-300 text-orange-600 focus:ring-orange-500">
-                            <span class="ml-3 text-sm text-slate-700">医師から録音の同意を得ました。</span>
-                        </label>
-                    </div>
-                </div>
+                <h2 class="text-2xl font-bold mb-2 text-slate-800">診察メモ作成</h2>
+                <p class="text-slate-600 mb-6">付き添いアシスタントが会話を文字に変換し、診察メモとして残します。音声は保存されません。</p>
 
                 <div id="recording-indicator" class="hidden flex items-center justify-center space-x-3 bg-red-100 text-red-700 p-3 rounded-lg mb-6 recording-indicator">
                     <div class="w-4 h-4 bg-red-500 rounded-full"></div>
-                    <span class="font-bold text-lg">録音中...</span>
+                    <span class="font-bold text-lg">診察メモ作成中...</span>
                     <span id="timer" class="font-mono text-lg">00:00</span>
                 </div>
 
                 <div class="flex items-center justify-center space-x-4">
-                    <button id="record-btn" class="flex items-center justify-center w-36 h-16 bg-slate-200 text-slate-500 font-bold py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <button id="record-btn" class="flex items-center justify-center w-36 h-16 bg-slate-200 text-slate-500 font-bold py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fas fa-microphone h-6 w-6 mr-2"></i>
-                        <span id="record-btn-text">録音開始</span>
+                        <span id="record-btn-text">付き添いアシスタント開始</span>
                     </button>
                     <button id="stop-btn" class="flex items-center justify-center w-36 h-16 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                         <i class="fas fa-stop h-6 w-6 mr-2"></i>
@@ -293,7 +277,7 @@
                             <ul class="list-disc list-inside text-sm mt-1 space-y-1">
                                 <li>このサービスは医療助言を提供するものではありません。</li>
                                 <li>緊急の場合は、速やかに医療機関を受診してください。</li>
-                                <li>録音データは個人の責任において管理してください。</li>
+                                <li>診察メモの文字データは個人の責任において管理してください。</li>
                             </ul>
                         </div>
                     </div>
@@ -360,8 +344,8 @@
 
     <div id="stop-modal" class="modal-backdrop">
         <div class="modal-content">
-            <h3 class="text-xl font-bold mb-4">録音の終了</h3>
-            <p class="text-slate-600 mb-6">本当に録音を終了しますか？終了すると、文字起こしと要約の生成が始まります。</p>
+            <h3 class="text-xl font-bold mb-4">診察メモ作成の終了</h3>
+            <p class="text-slate-600 mb-6">本当に診察メモ作成を終了しますか？終了すると、文字起こしと要約の生成が始まります。</p>
             <div class="flex justify-end space-x-4">
                 <button id="cancel-stop-btn" class="bg-slate-200 text-slate-800 font-bold py-2 px-6 rounded-full hover:bg-slate-300 transition">キャンセル</button>
                 <button id="confirm-stop-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-full hover:bg-red-700 transition">終了する</button>
@@ -390,7 +374,6 @@
             const profileForm = document.getElementById('profile-form');
             const nicknameInput = document.getElementById('nickname');
             const toRecordingBtn = document.getElementById('to-recording-btn');
-            const consentCheck = document.getElementById('consent-check');
             const recordBtn = document.getElementById('record-btn');
             const stopBtn = document.getElementById('stop-btn');
             const recordingIndicator = document.getElementById('recording-indicator');
@@ -468,10 +451,6 @@
             
             toRecordingBtn.addEventListener('click', () => {
                 showView('recording-section');
-            });
-
-            consentCheck.addEventListener('change', () => {
-                recordBtn.disabled = !consentCheck.checked;
             });
 
             recordBtn.addEventListener('click', () => {
