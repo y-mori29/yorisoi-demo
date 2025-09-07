@@ -10,7 +10,7 @@ const RecorderControls: React.FC = () => {
   const { start, pause, resume, stop, isRecording, isPaused } = useRecorder();
 
   const handleStop = async () => {
-    if (window.confirm('録音を終了しますか？')) {
+    if (window.confirm('付き添いアシスタントを終了しますか？')) {
       await stop();
     }
   };
@@ -18,7 +18,7 @@ const RecorderControls: React.FC = () => {
   return (
     <div>
       <button onClick={start} disabled={isRecording && !isPaused}>
-        録音
+        付き添いアシスタントを開始
       </button>
       <button onClick={isPaused ? resume : pause} disabled={!isRecording}>
         {isPaused ? '再開' : '一時停止'}
