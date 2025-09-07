@@ -1,4 +1,4 @@
-import { removeExpired } from '../utils/sharesStore';
+import { removeExpired } from '../utils/sharesStore.js';
 
 (async () => {
   const removed = await removeExpired();
