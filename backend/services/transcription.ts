@@ -4,7 +4,7 @@ import {
   saveTranscription,
   TranscriptionSegment,
   TranscriptionRecord,
-} from '../db/transcriptions';
+} from '../db/transcriptions.js';
 
 const client = new SpeechClient();
 
