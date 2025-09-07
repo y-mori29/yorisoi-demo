@@ -2,7 +2,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Pool } from 'pg';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+// Use the lightweight Gemini Flash Lite model for faster, lower-cost summaries
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-8b' });
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 export interface SummaryResult {
