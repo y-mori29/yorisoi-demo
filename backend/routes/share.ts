@@ -2,7 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { createShare, findShare, removeShare } from '../utils/sharesStore';
+import { createShare, findShare, removeShare } from '../utils/sharesStore.js';
 
 const router = Router();
 const MAX_CONTENT_BYTES = 1024 * 1024; // 1 MB limit
