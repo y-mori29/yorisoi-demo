@@ -250,23 +250,7 @@
             <!-- Screen: Recording -->
             <section id="recording-section" class="hidden bg-white rounded-xl shadow-lg p-6 md:p-8">
                 <h2 class="text-2xl font-bold mb-2 text-slate-800">診察メモ作成</h2>
-                <p class="text-slate-600 mb-6">医師の許可を得てから付き添いアシスタントを開始してください。</p>
-                
-                <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-800 p-4 rounded-r-lg mb-6">
-                    <div class="flex items-start">
-                        <i class="fas fa-info-circle h-6 w-6 mr-3 mt-1 text-amber-600"></i>
-                        <div>
-                            <h3 class="font-bold">医療者への利用告知</h3>
-                            <p class="text-sm">「会話を文字にする付き添いアシスタントを使ってもよろしいでしょうか？」とお伝えください。</p>
-                        </div>
-                    </div>
-                    <div class="mt-4 pl-8">
-                        <label for="consent-check" class="flex items-center cursor-pointer">
-                            <input type="checkbox" id="consent-check" class="h-5 w-5 rounded border-slate-300 text-orange-600 focus:ring-orange-500">
-                            <span class="ml-3 text-sm text-slate-700">医師から利用の許可を得ました。</span>
-                        </label>
-                    </div>
-                </div>
+                <p class="text-slate-600 mb-6">付き添いアシスタントが会話を文字に変換し、診察メモとして残します。音声は保存されません。</p>
 
                 <div id="recording-indicator" class="hidden flex items-center justify-center space-x-3 bg-red-100 text-red-700 p-3 rounded-lg mb-6 recording-indicator">
                     <div class="w-4 h-4 bg-red-500 rounded-full"></div>
@@ -275,7 +259,7 @@
                 </div>
 
                 <div class="flex items-center justify-center space-x-4">
-                    <button id="record-btn" class="flex items-center justify-center w-36 h-16 bg-slate-200 text-slate-500 font-bold py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <button id="record-btn" class="flex items-center justify-center w-36 h-16 bg-slate-200 text-slate-500 font-bold py-2 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fas fa-microphone h-6 w-6 mr-2"></i>
                         <span id="record-btn-text">付き添いアシスタント開始</span>
                     </button>
@@ -390,7 +374,6 @@
             const profileForm = document.getElementById('profile-form');
             const nicknameInput = document.getElementById('nickname');
             const toRecordingBtn = document.getElementById('to-recording-btn');
-            const consentCheck = document.getElementById('consent-check');
             const recordBtn = document.getElementById('record-btn');
             const stopBtn = document.getElementById('stop-btn');
             const recordingIndicator = document.getElementById('recording-indicator');
@@ -468,10 +451,6 @@
             
             toRecordingBtn.addEventListener('click', () => {
                 showView('recording-section');
-            });
-
-            consentCheck.addEventListener('change', () => {
-                recordBtn.disabled = !consentCheck.checked;
             });
 
             recordBtn.addEventListener('click', () => {
