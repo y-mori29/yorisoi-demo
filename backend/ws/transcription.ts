@@ -1,5 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { TranscriptionSegment } from '../db/transcriptions';
+import { TranscriptionSegment } from '../db/transcriptions.js';
 
 interface Client {
   id: string;
