@@ -1,13 +1,13 @@
 # yorisoi-demo
 
-よりそいのデモです
+Demo application for the **yorisoi** project.
 
-## Overview
+The app consists of:
 
-This project demonstrates the yorisoi demo application. It is composed of two main parts:
+- **backend/** – Express server with WebSocket support, deployed on **Google Cloud Run**.
+- **frontend/** – Next.js user interface.
 
-- `backend/` – an Express server with WebSocket support.
-- `frontend/` – a Next.js user interface.
+The backend uses **Google Cloud Speech-to-Text** to transcribe audio and **Gemini Flash Lite** (model `gemini-1.5-flash-8b`) to generate summaries.
 
 ## Directory Structure
 
@@ -24,78 +24,48 @@ This project demonstrates the yorisoi demo application. It is composed of two ma
 
 - Node.js
 - npm
+- A Google Cloud project with Speech-to-Text and Gemini APIs enabled
 
 ## Environment Variables
 
 | Name | Description |
 | ---- | ----------- |
-| `GOOGLE_API_KEY` | API key for Google Gemini. |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Path to the Google Cloud JSON credentials for Speech-to-Text. |
+| `GOOGLE_API_KEY` | API key for Gemini Flash Lite. |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to Google Cloud credentials JSON for Speech-to-Text. |
 | `DATABASE_URL` | Connection string for the database. |
 | `NEXT_PUBLIC_WS_URL` | WebSocket URL used by the frontend to connect to the backend. |
 | `NEXT_PUBLIC_DISCLAIMER_TEXT` | Disclaimer text displayed in the UI. Set after legal review. |
 | `ACCESS_LOG_MAX_BYTES` | *(optional)* Maximum size for access log files. |
 
-The repository includes an `.env.example` template. Copy it to `.env` and fill in the required values.
+Copy `.env.example` to `.env` and fill in the required values.
 
-## Getting Started
+## Local Development
 
-1. Install dependencies:
+```bash
+npm install                # Install dependencies
+cp .env.example .env       # Set up environment
+npm run dev:backend        # Start backend server
+npm run dev:frontend       # Start frontend server
+```
 
-   ```bash
-   npm install
-   ```
-2. Create a `.env` file:
+## Deploying the Backend to Cloud Run
 
-   ```bash
-   cp .env.example .env
-   ```
-3. Start the backend server:
+Build and deploy the backend using the provided Dockerfile:
 
-   ```bash
-   npm run dev:backend
-   ```
-4. Start the frontend development server:
+```bash
+gcloud builds submit --tag gcr.io/PROJECT_ID/yorisoi-backend backend/
+gcloud run deploy yorisoi-backend \
+  --image gcr.io/PROJECT_ID/yorisoi-backend \
+  --region REGION \
+  --set-env-vars GOOGLE_API_KEY=YOUR_KEY,DATABASE_URL=YOUR_DB_URL
+```
 
-   ```bash
-   npm run dev:frontend
-   ```
+Ensure that the service account used by Cloud Run has access to Speech-to-Text and Gemini APIs and that the credentials JSON is available via `GOOGLE_APPLICATION_CREDENTIALS`.
 
 ## Disclaimer
 
-Set `NEXT_PUBLIC_DISCLAIMER_TEXT` after legal review.
+Set `NEXT_PUBLIC_DISCLAIMER_TEXT` after legal review. The text appears in the footer of the summary and share pages.
 
-サマリー画面および共有リンク画面のフッターに免責事項が表示されます。文言は `NEXT_PUBLIC_DISCLAIMER_TEXT` 環境変数で管理しており、法務確認後に設定してください。
+## 日本語での補足
 
-## 日本語での補足説明
-
-### プロジェクト概要
-このプロジェクトは Express と WebSocket を利用したバックエンドと、Next.js を利用したフロントエンドから構成されています。アプリの動作や構成を理解するためのデモです。
-
-### ディレクトリ構成
-- `backend/` - Express と WebSocket を使ったサーバー
-- `frontend/` - Next.js を使ったユーザーインターフェース
-- `.env.example` - 環境変数のサンプル
-- `package.json` - スクリプトと依存関係の定義
-
-### 前提条件
-開発を始めるには Node.js と npm が必要です。
-
-### 環境変数
-- `GOOGLE_API_KEY`: Gemini API を利用するためのキー
-- `GOOGLE_APPLICATION_CREDENTIALS`: Google Cloud Speech-to-Text 用の認証情報へのパス
-- `DATABASE_URL`: データベースへの接続文字列
-- `NEXT_PUBLIC_WS_URL`: フロントエンドがバックエンドに接続するための WebSocket URL
-- `NEXT_PUBLIC_DISCLAIMER_TEXT`: UI に表示する免責事項の文言（法務確認後に設定）
-- `ACCESS_LOG_MAX_BYTES`: （任意）アクセスログファイルの最大サイズ
-
-`.env.example` を `.env` にコピーし、必要な値を設定してください。
-
-### 開発の始め方
-1. 依存関係をインストールする: `npm install`
-2. `.env` を作成する: `cp .env.example .env`
-3. バックエンドを起動する: `npm run dev:backend`
-4. フロントエンドを起動する: `npm run dev:frontend`
-
-### 免責事項の設定
-`NEXT_PUBLIC_DISCLAIMER_TEXT` に設定した文言がサマリー画面と共有リンク画面のフッターに表示されます。必ず法務確認後に設定してください。
+このプロジェクトは、バックエンドを **Google Cloud Run** 上で動作させ、音声の文字起こしに **Google Cloud Speech-to-Text**、要約生成に **Gemini Flash Lite** を利用します。`.env.example` を参考に環境変数を設定し、上記のコマンドで開発・デプロイを行ってください。
