@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import fs from 'fs';
-import { UPLOADS_DIR } from '../utils/cleanupUploads';
+import { cleanupUploads } from '../utils/cleanupUploads.js';
 
 const router = Router();
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
