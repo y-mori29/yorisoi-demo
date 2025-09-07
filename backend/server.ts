@@ -1,12 +1,12 @@
 import express from 'express';
 import http from 'http';
 
-import uploadAudioRouter from './routes/uploadAudio';
-import transcriptionsRouter from './routes/transcriptions';
-import consentRouter, { initConsentTable } from './routes/consent';
-import shareRouter from './routes/share';
-import { startTranscriptionWS } from './ws/transcription';
-import { cleanupUploads } from './utils/cleanupUploads';
+import uploadAudioRouter from './routes/uploadAudio.js';
+import transcriptionsRouter from './routes/transcriptions.js';
+import consentRouter, { initConsentTable } from './routes/consent.js';
+import shareRouter from './routes/share.js';
+import { startTranscriptionWS } from './ws/transcription.js';
+import { cleanupUploads } from './utils/cleanupUploads.js';
 
 async function startServer() {
   // 起動前の初期化
