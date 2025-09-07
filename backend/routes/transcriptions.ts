@@ -1,5 +1,6 @@
 import express from 'express';
 import { getTranscription, updateTranscription, TranscriptionSegment } from '../db/transcriptions';
+import * as db from '../db/transcriptions.js';
 
 const router = express.Router();
 
