@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>よりそい 診察メモLIFF</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    --primary-color: #3882F6; /* やさしい青 */
+    --danger-color: #EF4444;  /* はっきりした赤 */
+    --success-color: #10B981; /* やさしい緑 */
+    --warning-color: #F59E0B; /* やさしい黄色 */
+    --secondary-color: #6B7280;
+    --bg-light: #F9FAFB;
+    --bg-app: #F3F4F6;
+    --text-dark: #1F2937;
+    --text-light: #ffffff;
+    --border-color: #E5E7EB;
+  }
+  
+  /* 基本設定 */
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-app);
+    margin: 0;
+    padding: 16px 16px 100px 16px; /* 下部ナビゲーションの分だけ余白を追加 */
+    color: var(--text-dark);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    box-sizing: border-box;
+    font-size: 16px; /* 文字サイズを少し大きく */
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+    background-color: var(--text-light);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+    box-sizing: border-box;
+  }
+
+  /* --- キャラクターエリア --- */
+  .character-area {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 16px;
+    background-color: var(--bg-light);
+    border-radius: 12px;
+  }
+  .character-area img {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 12px;
+    transition: transform 0.3s ease-in-out;
+  }
+  .character-area img.is-recording {
+    transform: scale(1.1);
+  }
+  .speech-bubble {
+    background-color: white;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    color: var(--text-dark);
+    font-weight: 500;
+    min-height: 48px; /* 高さを固定してガタつきを防ぐ */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* ヘッダー */
+  header {
+    font-size: 24px; /* 少し大きくして見やすく */
+    font-weight: bold;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+  }
+
+  p, li { line-height: 1.7; color: #4B5563; }
+  .hidden { display: none; }
+  
+  /* ボタン */
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 18px 16px; /* 少し大きくして押しやすく */
+    border-radius: 12px;
+    margin: 16px 0 8px;
+    border: none;
+    font-size: 18px; /* 少し大きく */
+    font-weight: bold;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  button svg { width: 24px; height: 24px; }
+  button:not(:disabled):hover { opacity: 0.9; }
+  button:not(:disabled):active { transform: scale(0.98); }
+  button:disabled { background-color: #D1D5DB; cursor: not-allowed; box-shadow: none; }
+  #startBtn { background-color: var(--primary-color); }
+  #stopBtn { background-color: var(--danger-color); }
+  #refreshHistory { background-color: var(--secondary-color); }
+
+  /* --- recordView 専用スタイル --- */
+  .instructions { padding: 0 10px; text-align: center; }
+  .instructions p { font-size: 16px; margin-bottom: 24px; }
+  .steps { list-style: none; padding: 0; margin: 24px 0; text-align: left; }
+  .steps li { display: flex; align-items: center; margin-bottom: 12px; font-size: 15px; }
+  .steps li span { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background-color: var(--primary-color); color: white; border-radius: 50%; font-weight: bold; margin-right: 12px; font-size: 14px; }
+  .result-info { background-color: #ECFDF5; color: #065F46; padding: 12px; border-radius: 8px; font-weight: 500; margin-top: 24px; }
+  .warn-iphone { background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px; color: #92400E; margin-top: 24px; }
+  
+  /* 履歴ビュー */
+  #historyList { list-style: none; padding: 0; margin-top: 16px; }
+  #historyList li { background-color: var(--bg-light); padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--primary-color); }
+
+  /* ヘルプビュー */
+  #helpView h3 { font-size: 18px; margin-top: 20px; margin-bottom: 10px; border-left: 4px solid var(--primary-color); padding-left: 8px; }
+  #helpView ol { padding-left: 20px; }
+
+  /* --- 下部ナビゲーション --- */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    background-color: #ffffff;
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+    padding: 8px 0;
+    z-index: 100;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--secondary-color);
+    text-decoration: none;
+    padding: 4px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none; background: none;
+  }
+  .nav-item.active { color: var(--primary-color); font-weight: bold; }
+  .nav-item svg { width: 24px; height: 24px; }
+
+  /* --- 通知バー --- */
+  #notification {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    z-index: 200;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  #notification.show { transform: translateY(0); }
+  #notification.error { background-color: var(--danger-color); }
+  #notification.success { background-color: var(--success-color); }
+  #notification.warning { background-color: var(--warning-color); }
+</style>
+</head>
+<body>
+  
+  <div id="notification" class="hidden"></div>
+
+  <div class="container">
+    
+    <div class="character-area">
+      <img id="characterImage" src="https://placehold.co/100x100/A7D3A1/FFFFFF?text=フクロウ" alt="マスコットキャラクター">
+      <div id="speechBubble" class="speech-bubble">...</div>
+    </div>
+
+    <header id="title">おまかせ診察メモ</header>
+
+    <div id="tabs">
+      <div id="recordView" class="hidden">
+        <div class="instructions">
+            <p>医師との大切な会話を、後から振り返れるメモにします。</p>
+            <ol class="steps">
+                <li><span>1</span>下の「おまかせメモをはじめる」ボタンを押す</li>
+                <li><span>2</span>診察中はスマホを置いたままでOKです</li>
+                <li><span>3</span>診察が終わったら「完了する」ボタンを押す</li>
+            </ol>
+            <p class="result-info">しばらくすると、LINEに要約が届きます。</p>
+        </div>
+        <div class="warn-iphone hidden">
+            <p><strong>iPhoneをご利用の方へ</strong></p>
+            <p>メモ作成中は画面をロックせず、この画面を表示したままにしてください。</p>
+        </div>
+
+        <button id="startBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            <span>おまかせメモをはじめる</span>
+        </button>
+        <button id="stopBtn" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            <span>完了する</span>
+        </button>
+      </div>
+
+      <div id="historyView" class="hidden">
+        <p>過去の診察メモ履歴です。</p>
+        <ul id="historyList"></ul>
+        <button id="refreshHistory">更新</button>
+      </div>
+
+      <div id="helpView" class="hidden">
+        <h3>使い方</h3>
+        <ol>
+          <li>「おまかせメモをはじめる」ボタンでメモ作成を開始します。</li>
+          <li>診察が終わったら「完了する」ボタンで終了します。</li>
+          <li>処理が終わると、まとめがLINEに届きます。</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button id="navRecord" class="nav-item active">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v-2h-2z"/></svg>
+      <span>メモ作成</span>
+    </button>
+    <button id="navHistory" class="nav-item">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8H12z"/></svg>
+      <span>過去のメモ</span>
+    </button>
+    <button id="navHelp" class="nav-item">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
+      <span>使い方</span>
+    </button>
+  </nav>
+
+<script>
+/* --- 定数 --- */
+const LIFF_ID = "2008082630-ry2J7971"; // ★ご自身のLIFF IDに書き換えてください
+const USE_UPLOAD = true;
+const API_BASE = "https://yorisoi-849815845863.asia-northeast1.run.app";
+const SIGN_URL = `${API_BASE}/sign-upload`;
+const FINALIZE_URL = `${API_BASE}/finalize`;
+const JOB_URL = (id) => `${API_BASE}/jobs/${id}`;
+const HISTORY_URL = `${API_BASE}/history`;
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+// 画像を外部URLからSVGデータURIに変更し、コンテンツブロックを回避
+const svgToDataURI = (svg) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
+const CHARACTER_IMAGES = {
+  idle: svgToDataURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><style>.body{fill:#A5846E;}.face{fill:#F5EFE6;}.eye{stroke:#5D4037;stroke-width:4;fill:none;stroke-linecap:round;}.beak{fill:#FFB74D;}</style><circle cx="50" cy="55" r="38" class="body"/><path class="face" d="M50,25 C25,25 25,60 50,60 C75,60 75,25 50,25 Z" /><path class="face" d="M50,60 C30,85 70,85 50,60 Z"/><path class="eye" d="M35 45 Q40 40 45 45" /><path class="eye" d="M55 45 Q60 40 65 45" /><polygon class="beak" points="48,52 52,52 50,56"/></svg>`),
+  recording: svgToDataURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><style>.body{fill:#A5846E;}.face{fill:#F5EFE6;}.eye{stroke:#5D4037;stroke-width:4;fill:none;stroke-linecap:round;}.beak{fill:#FFB74D;}.memo{fill:white;stroke:#BDBDBD;stroke-width:1;}</style><circle cx="50" cy="55" r="38" class="body"/><path class="face" d="M50,25 C25,25 25,60 50,60 C75,60 75,25 50,25 Z" /><path class="face" d="M50,60 C30,85 70,85 50,60 Z"/><path class="eye" d="M35 45 Q40 40 45 45" /><path class="eye" d="M55 45 Q60 40 65 45" /><polygon class="beak" points="48,52 52,52 50,56"/><g transform="translate(5, 5) rotate(-15 65 65)"><rect x="60" y="50" width="25" height="30" rx="3" class="memo"/><path d="M63 55h19 M63 60h19 M63 65h12" stroke="#E0E0E0" stroke-width="2" stroke-linecap="round"/></g></svg>`),
+  processing: svgToDataURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><style>.body{fill:#A5846E;}.face{fill:#F5EFE6;}.eye{fill:#5D4037;}.beak{fill:#FFB74D;}</style><circle cx="50" cy="55" r="38" class="body"/><path class="face" d="M50,25 C25,25 25,60 50,60 C75,60 75,25 50,25 Z" /><path class="face" d="M50,60 C30,85 70,85 50,60 Z"/><circle cx="40" cy="45" r="5" class="eye" /><circle cx="60" cy="45" r="5" class="eye" /><polygon class="beak" points="48,52 52,52 50,56"/><path d="M70 30 A 10 10 0 0 1 80 40" stroke="#81D4FA" stroke-width="4" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 75 35" to="360 75 35" dur="1.5s" repeatCount="indefinite"/></path></svg>`),
+  success: svgToDataURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><style>.body{fill:#A5846E;}.face{fill:#F5EFE6;}.eye{stroke:#5D4037;stroke-width:4;fill:none;stroke-linecap:round;}.beak{fill:#FFB74D;}</style><circle cx="50" cy="55" r="38" class="body"/><path class="face" d="M50,25 C25,25 25,60 50,60 C75,60 75,25 50,25 Z" /><path class="face" d="M50,60 C30,85 70,85 50,60 Z"/><path class="eye" d="M35 45 Q40 40 45 45" /><path class="eye" d="M55 45 Q60 40 65 45" /><polygon class="beak" points="48,52 52,52 50,56"/><g fill="#FFD700"><path d="M20 25 L 22 20 L 24 25 L 29 27 L 24 29 L 22 34 L 20 29 L 15 27 Z"><animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite" /></path><path d="M80 50 L 82 45 L 84 50 L 89 52 L 84 54 L 82 59 L 80 54 L 75 52 Z" transform="translate(-5, 10)"><animate attributeName="opacity" values="0;1;0" dur="2s" begin="0.5s" repeatCount="indefinite" /></path></g></svg>`),
+  error: svgToDataURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><style>.body{fill:#A5846E;}.face{fill:#F5EFE6;}.eye{stroke:#5D4037;stroke-width:4;fill:none;stroke-linecap:round;}.beak{fill:#FFB74D;}</style><circle cx="50" cy="55" r="38" class="body"/><path class="face" d="M50,25 C25,25 25,60 50,60 C75,60 75,25 50,25 Z" /><path class="face" d="M50,60 C30,85 70,85 50,60 Z"/><path class="eye" d="M35 45 L 45 42" /><path class="eye" d="M65 45 L 55 42" /><polygon class="beak" points="48,52 52,52 50,56"/></svg>`)
+};
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+/* --- グローバル変数 --- */
+let USER_ID = null;
+let stream = null, recorder = null, sessionId = null, seq = 0;
+let inflightUploads = [];
+
+/* --- UI要素 --- */
+const el = id => document.getElementById(id);
+
+/* --- 通知機能 --- */
+function showNotification(message, type = 'error', duration = 4000) {
+  const notification = el('notification');
+  notification.textContent = message;
+  notification.className = type; // 'error', 'success', 'warning'
+  notification.classList.add('show');
+  setTimeout(() => {
+    notification.classList.remove('show');
+  }, duration);
+}
+
+/* --- キャラクター制御 --- */
+function updateCharacter(state, message) {
+  const states = {
+    idle: {
+      img: CHARACTER_IMAGES.idle,
+      text: '準備はいいですか？<br>いつでも始められますよ。'
+    },
+    recording: {
+      img: CHARACTER_IMAGES.recording,
+      text: 'お話をしっかり聞いていますから、<br>大丈夫ですよ。'
+    },
+    processing: {
+      img: CHARACTER_IMAGES.processing,
+      text: '大切なポイントをまとめています。<br>もう少しお待ちくださいね。'
+    },
+    success: {
+      img: CHARACTER_IMAGES.success,
+      text: 'おつかれさまでした！<br>大切なメモをLINEに届けました。'
+    },
+    timeout: {
+      img: CHARACTER_IMAGES.processing, // 処理中と同じ
+      text: '処理に時間がかかっています。<br>完了したらLINEでお知らせしますね。'
+    },
+    error: {
+      img: CHARACTER_IMAGES.error,
+      text: message || 'あれ？<br>何か問題が起きたようです。'
+    }
+  };
+  const S = states[state] || states.idle;
+  el('characterImage').src = S.img;
+  el('speechBubble').innerHTML = S.text;
+  
+  if (state === 'recording') {
+    el('characterImage').classList.add('is-recording');
+  } else {
+    el('characterImage').classList.remove('is-recording');
+  }
+}
+
+/* --- LIFF 初期化 & ルーティング --- */
+async function initLiff() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+    const prof = await liff.getProfile();
+    USER_ID = prof.userId;
+    console.log('ログイン済み userId=' + USER_ID);
+    routeTab('record'); // 初期表示は必ずメモ作成タブ
+  } catch (e) {
+    console.error('LIFF 初期化エラー:', e);
+    showNotification('LIFFの初期化に失敗しました。');
+    updateCharacter('error', 'LIFFの初期化に失敗しました。');
+  }
+}
+
+/* --- タブ表示 --- */
+function routeTab(tab) {
+  ['recordView', 'historyView', 'helpView'].forEach(id => el(id).classList.add('hidden'));
+  ['navRecord', 'navHistory', 'navHelp'].forEach(id => el(id).classList.remove('active'));
+
+  if (tab === 'record') {
+    el('title').textContent = 'おまかせ診察メモ';
+    el('recordView').classList.remove('hidden');
+    el('navRecord').classList.add('active');
+    updateCharacter('idle');
+  } else if (tab === 'history') {
+    el('title').textContent = '過去のメモ';
+    el('historyView').classList.remove('hidden');
+    el('navHistory').classList.add('active');
+    loadHistory();
+  } else { // help
+    el('title').textContent = '使い方';
+    el('helpView').classList.remove('hidden');
+    el('navHelp').classList.add('active');
+  }
+}
+
+/* --- メモ作成ロジック --- */
+function isIphone() { return /iPhone/.test(navigator.userAgent); }
+function pickMime() {
+  const cand = ['audio/mp4', 'video/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
+  for (const t of cand) {
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t;
+  }
+  return '';
+}
+
+async function startRec() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mime = pickMime();
+    recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+    sessionId = crypto.randomUUID();
+    seq = 0;
+    inflightUploads = [];
+
+    updateCharacter('recording');
+    el('startBtn').disabled = true;
+    el('stopBtn').disabled = false;
+    el('instructions').classList.add('hidden');
+    if (isIphone()) { el('warn-iphone').classList.remove('hidden'); }
+
+    recorder.ondataavailable = (ev) => {
+      if (!ev.data || ev.data.size === 0) return;
+      if (USE_UPLOAD) {
+        inflightUploads.push(uploadChunk(ev.data));
+      }
+    };
+    recorder.onerror = e => {
+      console.error('マイクエラー:', e);
+      updateCharacter('error', 'マイクで問題が発生しました。');
+    };
+    recorder.start(10000); // 10秒チャンク
+  } catch (err) {
+    console.error('マイクの利用許可が必要です:', err);
+    showNotification('マイクの利用を許可してください。');
+    updateCharacter('error', 'マイクの利用を<br>許可してくださいね。');
+  }
+}
+
+async function stopRec() {
+  try {
+    if (recorder && recorder.state !== 'inactive') {
+      const stopped = new Promise(res => recorder.addEventListener('stop', res, { once: true }));
+      recorder.stop();
+      await stopped;
+    }
+    await new Promise(r => setTimeout(r, 200));
+
+    if (USE_UPLOAD && inflightUploads.length) {
+      await Promise.allSettled(inflightUploads);
+      inflightUploads = [];
+    }
+    stream && stream.getTracks().forEach(t => t.stop());
+
+    el('startBtn').disabled = false;
+    el('stopBtn').disabled = true;
+    el('instructions').classList.remove('hidden');
+    el('warn-iphone').classList.add('hidden');
+
+    if (USE_UPLOAD) {
+      updateCharacter('processing');
+      const r = await fetch(FINALIZE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, userId: USER_ID })
+      });
+      const j = await r.json();
+      if (!j.ok) {
+        throw new Error('Finalize error: ' + (j.error || 'Unknown'));
+      }
+      console.log('finalize開始 jobId=' + j.jobId);
+      pollJobStatus(j.jobId);
+    } else {
+        updateCharacter('success', 'メモデータをローカルに保存できます。');
+    }
+  } catch (e) {
+    console.error('停止エラー:', e);
+    updateCharacter('error', '処理の完了時に<br>エラーが発生しました。');
+  }
+}
+
+function pollJobStatus(jobId) {
+  let attempts = 0;
+  const maxAttempts = 30; // 4秒 * 30回 = 120秒 (2分)
+  const intervalId = setInterval(async () => {
+    try {
+      attempts++;
+      const stRes = await fetch(JOB_URL(jobId));
+      if (!stRes.ok) { // ネットワークエラー等
+        throw new Error(`Status check failed: ${stRes.status}`);
+      }
+      const st = await stRes.json();
+
+      if (st.status === 'DONE') {
+        clearInterval(intervalId);
+        updateCharacter('success');
+        console.log('STT完了＆LINE送信');
+      } else if (attempts >= maxAttempts) {
+        clearInterval(intervalId);
+        updateCharacter('timeout');
+        console.log('STTタイムアウト');
+      } else {
+        console.log('STT進行中…');
+      }
+    } catch (e) {
+      console.error('Job status polling error:', e);
+      // ネットワークエラーが続く場合もタイムアウトさせる
+      if (attempts >= maxAttempts) {
+        clearInterval(intervalId);
+        updateCharacter('error', 'サーバーとの通信に失敗しました。');
+      }
+    }
+  }, 4000);
+}
+  
+async function uploadChunk(blob) {
+  seq++;
+  const ct = blob.type || 'audio/webm';
+  try {
+    const signRes = await fetch(SIGN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, userId: USER_ID, seq, contentType: ct })
+    });
+    if (!signRes.ok) throw new Error('署名URL取得エラー');
+    const { signedUrl, objectPath } = await signRes.json();
+
+    const putRes = await fetch(signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': ct },
+      body: blob
+    });
+    if (!putRes.ok) throw new Error('GCSアップロード失敗');
+    console.log(`chunk uploaded seq=${seq} → ${objectPath}`);
+  } catch (e) {
+    console.error('Upload chunk error:', e.message);
+    showNotification('データの送信に失敗しました。電波の良い場所でお試しください。', 'error');
+    // エラーが起きても録音は止めず、次のチャンクを試行する
+  }
+}
+
+/* --- 履歴取得 --- */
+async function loadHistory() {
+  const list = el('historyList');
+  try {
+    list.innerHTML = '<li>読み込み中…</li>';
+    const res = await fetch(HISTORY_URL + '?userId=' + encodeURIComponent(USER_ID));
+    if (!res.ok) throw new Error(await res.text());
+    const items = await res.json();
+    if (!Array.isArray(items) || items.length === 0) { 
+      list.innerHTML = '<li>過去のメモはありません</li>'; 
+      updateCharacter('idle', 'まだメモはありませんね。<br>次回の診察でぜひお手伝いさせてください！');
+      return; 
+    }
+    list.innerHTML = '';
+    items.forEach(it => {
+      const li = document.createElement('li');
+      li.textContent = `${it.date || ''} — ${it.title || it.summary || ''}`;
+      list.appendChild(li);
+    });
+    updateCharacter('idle', 'これまでの記録ですね。<br>一緒に振り返ってみましょう。');
+  } catch (e) {
+    list.innerHTML = '<li>履歴の取得に失敗しました</li>';
+    console.error('history load error: ' + e);
+    updateCharacter('error', '履歴の読み込みに<br>失敗してしまいました。');
+  }
+}
+
+/* --- イベント割当 --- */
+document.addEventListener('DOMContentLoaded', () => {
+  el('startBtn').onclick = startRec;
+  el('stopBtn').onclick = stopRec;
+  el('refreshHistory').onclick = loadHistory;
+  el('navRecord').onclick = () => routeTab('record');
+  el('navHistory').onclick = () => routeTab('history');
+  el('navHelp').onclick = () => routeTab('help');
+  
+  initLiff();
+});
+</script>
+</body>
+</html>
+
